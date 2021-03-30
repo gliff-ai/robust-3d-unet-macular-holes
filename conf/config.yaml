@@ -1,0 +1,59 @@
+---
+# Small 3D U-Net (Proposal)
+exp_499: &exp_499
+  combine_probabilities: true
+  dataset_root: ../dataset
+  dataset_size_code: highres3
+  dataset_type: 3d
+  epochs: 500
+  iter_per_epoch: 10
+  learning_rate: 0.0001
+  model_id: unet_3d_proposal
+  weight_decay: 1.0e-06
+
+exp_500:
+  <<: *exp_499
+exp_501:
+  <<: *exp_499
+
+# Small Residual 3D U-Net
+exp_496: &exp_496
+  combine_probabilities: true
+  dataset_root: ../dataset
+  dataset_size_code: highres3
+  dataset_type: 3d
+  epochs: 500
+  iter_per_epoch: 10
+  learning_rate: 0.0001
+  model_id: unet_3d_residual_proposal
+  weight_decay: 1.0e-05
+
+exp_497:
+  <<: *exp_496
+
+exp_498:
+  <<: *exp_496
+
+# Deepmind's model
+exp_493: &exp_493
+  combine_probabilities: true
+  dataset_root: ../dataset
+  dataset_size_code: macular
+  dataset_type: 2d_slices
+  epochs: 500
+  iter_per_epoch: 490
+  learning_rate: 7.5e-05
+  model_id: unet_3d_slices_residual
+  weight_decay: 0
+
+exp_494:
+  <<: *exp_493
+
+exp_495:
+  <<: *exp_493
+
+exp_test:
+  <<: *exp_499
+  epochs: 1
+
+...
