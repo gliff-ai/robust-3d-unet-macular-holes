@@ -145,9 +145,9 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
             detailed_csv_writer = csv.writer(detailed_csvfile)
             if start_epoch == 0:
                 csv_writer.writerow(['epoch',
-                    'train_loss', 'train_jaccard', 'train_jaccard_90', 'train_jaccard_std', 'train_jaccard_full_size', 'train_jaccard_90', 'train_jaccard_full_size_std',
-                    'validation_loss', 'validation_jaccard', 'validation_jaccard_90', 'validation_jaccard_std', 'validation_jaccard_full_size', 'validation_jaccard_90', 'validation_jaccard_full_size_std',
-                    'test_loss', 'test_jaccard', 'test_jaccard_90', 'test_jaccard_std', 'test_jaccard_full_size', 'test_jaccard_90', 'test_jaccard_full_size_std'])
+                    'train_loss', 'train_jaccard', 'train_jaccard_full_size',
+                    'validation_loss', 'validation_jaccard', 'validation_jaccard_full_size',
+                    'test_loss', 'test_jaccard', 'test_jaccard_full_size'])
 
                 detailed_csv_writer.writerow(['epoch', 'dataset', 'im_name', 'jaccard', 'jaccard_full_size'])
             for epoch in range(start_epoch, start_epoch + epochs):
@@ -323,9 +323,9 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
                 logger.info(f'# Finished test set evaluation with jaccard: {test_jaccards.mean()})')
                 logger.info('###############################################################')
                 csv_line = [epoch,
-                    train_losses.mean(), train_jaccards.mean(), np.percentile(train_jaccards, 90),  train_jaccards.std(), train_jaccards_full_size.mean(), np.percentile(train_jaccards_full_size, 90),  train_jaccards_full_size.std(),
-                    validation_losses.mean(), validation_jaccards.mean(), np.percentile(validation_jaccards, 90),  validation_jaccards.std(), validation_jaccards_full_size.mean(), np.percentile(validation_jaccards_full_size, 90),  validation_jaccards_full_size.std(),
-                    test_losses.mean(), test_jaccards.mean(), np.percentile(test_jaccards, 90),  test_jaccards.std(), test_jaccards_full_size.mean(), np.percentile(test_jaccards_full_size, 90),  test_jaccards_full_size.std()]
+                    train_losses.mean(), train_jaccards.mean(), train_jaccards_full_size.mean(),
+                    validation_losses.mean(), validation_jaccards.mean(), validation_jaccards_full_size.mean(),
+                    test_losses.mean(), test_jaccards.mean(), test_jaccards_full_size.mean()]
                 logger.info(f'writing to csv: {csv_line}')
                 csv_writer.writerow(csv_line)
                 detailed_csvfile.flush()
