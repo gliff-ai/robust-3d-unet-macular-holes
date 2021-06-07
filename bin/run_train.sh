@@ -4,8 +4,7 @@ source /etc/profile
 
 cd ../src
 
-declare -a exp_ids=("499" "500" "501" "496" "497" "498" "493" "494" "495")
-#declare -a exp_ids=("test")
+declare -a exp_ids=("001" "002" "003" "004" "005" "006" "007" "008" "009")
 
 for exp_id in "${exp_ids[@]}"
 do

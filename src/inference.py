@@ -71,9 +71,6 @@ def run(model, dataset_group, exp_id, weights_filename):
                         full_size_gt_accum = []
                         img_name = [f"{'_'.join(img_name[0].split('_')[:-1])}.tif"]
 
-                print(f'is_cropped: {getattr(dataset_group, "is_cropped", False)}')
                 print(f'outputting images... {img_dir}, {img_name}')
-
-                print(f'shape: {result.cpu().numpy().shape} -> {full_size_gt[0, 0].shape}')
                 full_size_result = resize(result.cpu(), full_size_gt[0, 0].shape)
                 common.output_images(img_dir, full_size_thresholded_result_dir, result_dir, img_name, img, full_size_result)
