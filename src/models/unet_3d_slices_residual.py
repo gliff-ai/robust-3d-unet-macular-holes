@@ -15,7 +15,6 @@ class Interpolate(torch.nn.Module):
 class UNet3DSlicesResidual(torch.nn.Module):
     def __init__(self):
         super(UNet3DSlicesResidual, self).__init__()
-        #self.conv_down_00 = torch.nn.Conv3d(1, 32, 3, padding=(0, 1, 1)) # Fauw et al
         self.conv_down_00 = torch.nn.Conv3d(1, 32, (1, 3, 3), padding=(0, 1, 1))
         self.bn_down_00 = torch.nn.BatchNorm3d(32)
         self.relu_down_00 = torch.nn.ReLU()
@@ -90,7 +89,6 @@ class UNet3DSlicesResidual(torch.nn.Module):
         self.bn_down_53 = torch.nn.BatchNorm3d(256)
         self.relu_down_53 = torch.nn.ReLU()
         self.interpolate_down_50 = Interpolate((1, 8, 7), 'trilinear')
-        #self.interpolate_down_50 = Interpolate((1, 1, 1), 'trilinear')
 
         self.conv_down_60 = torch.nn.Conv3d(256, 4092, (1, 3, 3), padding=(0, 1, 1))
         self.bn_down_60 = torch.nn.BatchNorm3d(4092)
@@ -122,7 +120,6 @@ class UNet3DSlicesResidual(torch.nn.Module):
         self.bn_bottom_74 = torch.nn.BatchNorm3d(1)
         self.relu_bottom_74 = torch.nn.ReLU()
         self.interpolate_bottom_70 = Interpolate((1, 8, 7), 'trilinear')
-        #self.interpolate_bottom_70 = Interpolate((3, 16, 14), 'trilinear')
 
         self.conv_up_60 = torch.nn.Conv3d(8184, 256, (1, 3, 3), padding=(0, 1, 1))
         self.bn_up_60 = torch.nn.BatchNorm3d(256)
@@ -139,7 +136,6 @@ class UNet3DSlicesResidual(torch.nn.Module):
         self.interpolate_up_60 = Interpolate((3, 16, 14), 'trilinear')
 
         self.conv_up_50 = torch.nn.Conv3d(512, 128, (1, 3, 3), padding=(0, 1, 1))
-        #self.conv_up_50 = torch.nn.Conv3d(8184, 128, (1, 3, 3), padding=(0, 1, 1))
         self.bn_up_50 = torch.nn.BatchNorm3d(128)
         self.relu_up_50 = torch.nn.ReLU()
         self.conv_up_51 = torch.nn.Conv3d(128, 128, (1, 3, 3), padding=(0, 1, 1))
@@ -201,7 +197,6 @@ class UNet3DSlicesResidual(torch.nn.Module):
         self.conv_up_12 = torch.nn.Conv3d(32, 32, (1, 3, 3), padding=(0, 1, 1))
         self.bn_up_12 = torch.nn.BatchNorm3d(32)
         self.relu_up_12 = torch.nn.ReLU()
-        #self.interpolate_up_10 = Interpolate((9, 512, 448), 'trilinear')  # Fauw et al
         self.interpolate_up_10 = Interpolate((1, 376, 321), 'trilinear')
 
         self.conv_up_00 = torch.nn.Conv3d(64, 1, (1, 3, 3), stride=1, padding=(0, 1, 1))
@@ -367,7 +362,5 @@ class UNet3DSlicesResidual(torch.nn.Module):
         x_res = self.relu_up_01(self.bn_up_01(self.conv_up_01(x)))
         x_res = self.bn_up_02(self.conv_up_02(x_res))
         x = x_res + x
-
-        #x = torch.sigmoid(x)  # Not required as using BCEWithLogitsLoss
 
         return x

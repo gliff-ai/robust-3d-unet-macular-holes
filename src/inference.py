@@ -1,8 +1,6 @@
 import os
 import time
 
-import numpy as np
-import skimage.io
 import torch
 
 import common
@@ -39,7 +37,6 @@ def run(model, dataset_group, exp_id, weights_filename):
             result_accum = []
             gt_accum = []
             full_size_gt_accum = []
-            result_crops = []
             for img, gt, full_size_img, full_size_gt, img_name in getattr(dataset_group, dataset):
                 assert(len(img_name) == 1)
                 img = img.to(device=device)
@@ -75,51 +72,8 @@ def run(model, dataset_group, exp_id, weights_filename):
                         img_name = [f"{'_'.join(img_name[0].split('_')[:-1])}.tif"]
 
                 print(f'is_cropped: {getattr(dataset_group, "is_cropped", False)}')
-                if getattr(dataset_group, 'is_cropped', False):
-                    if '_8' in img_name[0]: # TODO: Make this more generic
-                        result_crops.append(result.detach().cpu().numpy())
-                        # Combine all results together into a correctly sized image
-                        combined_result = np.zeros(full_size_gt.shape)
-                        print(f'combined_result.shape: {combined_result.shape}')
-                        print(f'result_crops: {len(result_crops)}')
-                        for x_crop_idx in range(3):
-                            for y_crop_idx in range(3):
-                                result_part = result_crops.pop(0)
-                                crop_y_extent = result_part.shape[3]
-                                crop_x_extent = result_part.shape[4]
+                print(f'outputting images... {img_dir}, {img_name}')
 
-                                if y_crop_idx == 0:
-                                    y_start = 0
-                                elif y_crop_idx == 1:
-                                    midway = (combined_result.shape[3] / 2)
-                                    y_start = int(midway - (crop_y_extent / 2))
-                                elif y_crop_idx == 2:
-                                    y_start = combined_result.shape[3] - crop_y_extent
-
-                                if x_crop_idx == 0:
-                                    x_start = 0
-                                elif x_crop_idx == 1:
-                                    midway = (combined_result.shape[4] / 2)
-                                    x_start = int(midway - (crop_x_extent / 2))
-                                elif x_crop_idx == 2:
-                                    x_start = combined_result.shape[4] - crop_x_extent
-
-                                print(f'result_part.shape: {result_part.shape}')
-                                combined_result[:,:,:, y_start:y_start+crop_y_extent, x_start:x_start+crop_x_extent] = result_part
-                                full_size_result = torch.from_numpy(combined_result)
-                        result_crops = []
-
-                        full_size_result = full_size_result[0]
-                        full_size_img = full_size_img[0]
-                        print(f'outputting images... {img_dir}, {img_name}')
-                        print(f'shape: {full_size_img.shape},{full_size_result.cpu().numpy().shape},{full_size_gt[0].shape}')
-
-                        common.output_images(img_dir, full_size_thresholded_result_dir, result_dir, img_name, full_size_img, full_size_result)
-                    else:
-                        result_crops.append(result.detach().cpu().numpy())
-                else:
-                    print(f'outputting images... {img_dir}, {img_name}')
-
-                    print(f'shape: {result.cpu().numpy().shape} -> {full_size_gt[0, 0].shape}')
-                    full_size_result = resize(result.cpu(), full_size_gt[0, 0].shape)
-                    common.output_images(img_dir, full_size_thresholded_result_dir, result_dir, img_name, img, full_size_result)
+                print(f'shape: {result.cpu().numpy().shape} -> {full_size_gt[0, 0].shape}')
+                full_size_result = resize(result.cpu(), full_size_gt[0, 0].shape)
+                common.output_images(img_dir, full_size_thresholded_result_dir, result_dir, img_name, img, full_size_result)

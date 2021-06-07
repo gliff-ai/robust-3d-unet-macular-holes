@@ -1,7 +1,6 @@
 import os
 
 import numpy as np
-import pathlib
 import skimage.io
 import torch
 
@@ -22,7 +21,6 @@ OPTS = '''
   learning_rate
   model_id
   weight_decay'''
-
 
 
 def make_dataset_group(args):
@@ -67,20 +65,12 @@ def setup_device():
 
 def output_images(img_dir, thresholded_result_dir, result_dir, img_names, imgs, results, suffix=None):
     batch_size = len(img_names)
-    print(f'batch: {batch_size}')
     for i in range(batch_size):
         img_name = img_names[i]
         img = (imgs[i] * 255).cpu().numpy().astype(np.uint8)
         result = (results[i] * 255).cpu().numpy().astype(np.uint8)
-        print(f'img: {img.min()} {img.max()}')
-        print(f'result: {result.min()} {result.max()}')
         thresholded_result = ((results[i] > 0.5) * 255).cpu().numpy().astype(np.uint8)
-        print(f'thresholded_result: {thresholded_result.min()} {thresholded_result.max()}')
         if thresholded_result.sum() > 0:
-            print(f'output_images img_name {img_name}')
-            print(f'output_images img has shape {img.shape}')
-            print(f'output_images result has shape {result.shape}')
-            print(f'output_images thresholded_result has shape {thresholded_result.shape}')
             if img.shape[0] == 1:
                 img = img[0]
                 result = result[0]
@@ -89,13 +79,7 @@ def output_images(img_dir, thresholded_result_dir, result_dir, img_names, imgs, 
                 pass
             if suffix is not None:
                 img_name = f'{img_name.replace(".tif", "")}_{suffix}.tif'
-            #print(f'output_images tranimg has shape {img.shape}')
-            #print(f'output_images tranresult has shape {result.shape}')
             print(f'outputting: {os.path.join(img_dir, img_name)}...')
-            print(f'output_images img_name {img_name}')
-            print(f'output_images img has shape {img.shape}')
-            print(f'output_images result has shape {result.shape}')
-            print(f'output_images thresholded_result has shape {thresholded_result.shape}')
             if not img_name.endswith('.tif'):
                 img_name = f'{img_name}.tif'
             skimage.io.imsave(os.path.join(img_dir, img_name), img)

@@ -7,17 +7,13 @@ import subprocess
 import time
 
 import numpy as np
-import sklearn.metrics
 import torch
-from torch.cuda.amp import autocast
-from torch.cuda.amp import GradScaler
 import torch.optim
 
 import common
 
 
 logger = None
-IS_CROPPED = False # TODO: Put in config
 
 def get_git_hash():
     process = subprocess.Popen(['git', 'rev-parse', 'HEAD'], shell=False, stdout=subprocess.PIPE)
@@ -38,15 +34,12 @@ def jaccard(result, gt):
 
 
 
-def normal_training_loop(dataset_group, criterion, model, optimizer, iter_per_epoch, scaler):
+def normal_training_loop(dataset_group, criterion, model, optimizer, iter_per_epoch):
     train_losses = np.zeros(iter_per_epoch)
     train_jaccards = np.zeros(iter_per_epoch)
     train_jaccards_full_size = np.zeros(iter_per_epoch)
 
     load_start = time.time()
-    result_crops = []
-    #for img, gt, full_size_img, full_size_gt, img_name in dataset_group.training:
-    #for i in range(iter_per_epoch):
     i = 0
     while i < iter_per_epoch:
         img, gt, full_size_img, full_size_gt, img_name = dataset_group.training.next()
@@ -57,7 +50,6 @@ def normal_training_loop(dataset_group, criterion, model, optimizer, iter_per_ep
         full_size_gt = full_size_gt.to(device=DEVICE)
         load_finish = time.time()
         logger.info(f'perf,load_finished,{load_finish - load_start}')
-        #print(f'loop start: {img.shape}, {gt.shape}, {full_size_img.shape}, {full_size_gt.shape}, <{img_name}>')
         start = time.time()
         optimizer.zero_grad()
 
@@ -69,59 +61,13 @@ def normal_training_loop(dataset_group, criterion, model, optimizer, iter_per_ep
         finish = time.time()
         logger.info(f'perf,model,{finish - start}')
         train_losses[i] = loss.item()
-        if not IS_CROPPED:
-            full_size_result = dataset_group.resize_to_full_size(result)
-            start = time.time()
-            train_jaccards[i] = jaccard(result, gt)
-            train_jaccards_full_size[i] = jaccard(full_size_result, full_size_gt)
-            finish = time.time()
-            logger.info(f'perf,jaccard,{finish - start}')
-            i += 1
-        else:
-            if '_8' in img_name[0]: # TODO: Make this more generic
-                result_crops.append(result.detach().cpu().numpy())
-                # Combine all results together into a correctly sized image
-                combined_result = np.zeros(full_size_gt.shape)
-                print(f'combined_result.shape: {combined_result.shape}')
-                print(f'result_crops: {len(result_crops)}')
-                for x_crop_idx in range(3):
-                    for y_crop_idx in range(3):
-                        result_part = result_crops.pop(0)
-                        crop_y_extent = result_part.shape[3]
-                        crop_x_extent = result_part.shape[4]
-
-                        if y_crop_idx == 0:
-                            y_start = 0
-                        elif y_crop_idx == 1:
-                            midway = (combined_result.shape[3] / 2)
-                            y_start = int(midway - (crop_y_extent / 2))
-                        elif y_crop_idx == 2:
-                            y_start = combined_result.shape[3] - crop_y_extent
-
-                        if x_crop_idx == 0:
-                            x_start = 0
-                        elif x_crop_idx == 1:
-                            midway = (combined_result.shape[4] / 2)
-                            x_start = int(midway - (crop_x_extent / 2))
-                        elif x_crop_idx == 2:
-                            x_start = combined_result.shape[4] - crop_x_extent
-
-                        print(f'result_part.shape: {result_part.shape}')
-                        combined_result[:,:,:, y_start:y_start+crop_y_extent, x_start:x_start+crop_x_extent] = result_part
-
-                #import skimage.io
-                #result_to_file = combined_result[0, 0]
-                #print(f'result_to_file: {result_to_file.min()} {result_to_file.max()} {result_to_file.shape}')
-                #skimage.io.imsave(f'/tmp/{img_name[0]}.tif', (result_to_file > 0.5).astype(np.uint8))
-                #print(f'combined_result {combined_result.shape} {full_size_gt.shape}')
-                # These are the same for now.
-                train_jaccards[i] = jaccard(combined_result, full_size_gt.cpu().numpy())
-                train_jaccards_full_size[i] = jaccard(combined_result, full_size_gt.cpu().numpy())
-                result_crops = []
-                i += 1
-            else:
-                result_crops.append(result.detach().cpu().numpy())
-
+        full_size_result = dataset_group.resize_to_full_size(result)
+        start = time.time()
+        train_jaccards[i] = jaccard(result, gt)
+        train_jaccards_full_size[i] = jaccard(full_size_result, full_size_gt)
+        finish = time.time()
+        logger.info(f'perf,jaccard,{finish - start}')
+        i += 1
     return train_losses, train_jaccards, train_jaccards_full_size
 
 
@@ -150,8 +96,6 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
     logger = setup_logging(exp_id)
     global DEVICE
     DEVICE = common.setup_device()
-    global IS_CROPPED
-    IS_CROPPED = getattr(dataset_group, 'is_cropped', False)
     git_hash = get_git_hash()
     logger.info(f'Running on git revision: <{git_hash}> with params: model={type(model)},dataset_group={dataset_group}, epochs={epochs}, learning_rate={learning_rate}, exp_id={exp_id}, weight_decay={weight_decay}')
     model = model.to(device=DEVICE)
@@ -160,9 +104,6 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
     detailed_csv_filename = f'../out/cli-seg-results/cli_train_stats_detailed_{exp_id}.csv'
     os.makedirs(os.path.dirname(csv_filename), exist_ok=True)
 
-    # Early stopping
-    patience = 1000
-
     # Defaults
     best_validation_jaccard = 0.0
     best_test_jaccard = 0.0
@@ -170,8 +111,6 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
     start_epoch = 0
     csv_file_mode = 'w'
 
-    # AMP
-    scaler = None
     criterion = torch.nn.BCEWithLogitsLoss()
 
     # Resume from previous run if checkpoint available
@@ -221,7 +160,7 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
                 logger.info('# Started training set evaluation')
                 logger.info('###############################################################')
                 start = time.time()
-                train_losses, train_jaccards, train_jaccards_full_size = normal_training_loop(dataset_group, criterion, model, optimizer, iter_per_epoch, scaler)
+                train_losses, train_jaccards, train_jaccards_full_size = normal_training_loop(dataset_group, criterion, model, optimizer, iter_per_epoch)
 
                 finish = time.time()
                 logger.info(f'perf,train,{finish - start}')
@@ -239,8 +178,6 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
                 len_validation = len(dataset_group.validation)
                 if dataset_group.is_2d():
                     len_validation //= 49
-                elif IS_CROPPED:
-                    len_validation //= 9
                 validation_losses = np.zeros(len_validation)
                 validation_jaccards = np.zeros(len_validation)
                 validation_jaccards_full_size = np.zeros(len_validation)
@@ -251,7 +188,6 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
                     result_accum = []
                     gt_accum = []
                     full_size_gt_accum = []
-                    result_crops = []
                     for img, gt, full_size_img, full_size_gt, img_name in dataset_group.validation:
                         assert(len(img_name) == 1)
                         img = img.to(device=DEVICE)
@@ -289,57 +225,12 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
                         loss = criterion(result, gt)
                         validation_losses[i] = loss.item()
                         full_size_result = dataset_group.resize_to_full_size(result)
+                        validation_jaccards[i] = jaccard(result, gt)
+                        validation_jaccards_full_size[i] = jaccard(full_size_result, full_size_gt)
 
-                        # Begin is_cropped Hack
-                        if IS_CROPPED:
-                            print(f'is_cropped: {img_name}')
-                            if '_8' in img_name[0]: # TODO: Make this more generic
-                                result_crops.append(result.detach().cpu().numpy())
-                                # Combine all results together into a correctly sized image
-                                combined_result = np.zeros(full_size_gt.shape)
-                                print(f'combined_result.shape: {combined_result.shape}')
-                                print(f'result_crops: {len(result_crops)}')
-                                for x_crop_idx in range(3):
-                                    for y_crop_idx in range(3):
-                                        result_part = result_crops.pop(0)
-                                        crop_y_extent = result_part.shape[3]
-                                        crop_x_extent = result_part.shape[4]
-
-                                        if y_crop_idx == 0:
-                                            y_start = 0
-                                        elif y_crop_idx == 1:
-                                            midway = (combined_result.shape[3] / 2)
-                                            y_start = int(midway - (crop_y_extent / 2))
-                                        elif y_crop_idx == 2:
-                                            y_start = combined_result.shape[3] - crop_y_extent
-
-                                        if x_crop_idx == 0:
-                                            x_start = 0
-                                        elif x_crop_idx == 1:
-                                            midway = (combined_result.shape[4] / 2)
-                                            x_start = int(midway - (crop_x_extent / 2))
-                                        elif x_crop_idx == 2:
-                                            x_start = combined_result.shape[4] - crop_x_extent
-
-                                        print(f'result_part.shape: {result_part.shape}')
-                                        combined_result[:,:,:, y_start:y_start+crop_y_extent, x_start:x_start+crop_x_extent] = result_part
-                                        full_size_result = torch.from_numpy(combined_result).to(device=DEVICE)
-                                result_crops = []
-                                validation_jaccards[i] = jaccard(full_size_result, full_size_gt)
-                                validation_jaccards_full_size[i] = jaccard(full_size_result, full_size_gt)
-
-                                assert len(img_name) == 1, "This code can only handle batch size == 1"
-                                detailed_csv_writer.writerow([epoch, 'validation', img_name[0], validation_jaccards[i], validation_jaccards_full_size[i]])
-                                i += 1
-                            else:
-                                result_crops.append(result.detach().cpu().numpy())
-                        else:
-                            validation_jaccards[i] = jaccard(result, gt)
-                            validation_jaccards_full_size[i] = jaccard(full_size_result, full_size_gt)
-
-                            assert len(img_name) == 1, "This code can only handle batch size == 1"
-                            detailed_csv_writer.writerow([epoch, 'validation', img_name[0], validation_jaccards[i], validation_jaccards_full_size[i]])
-                            i += 1
+                        assert len(img_name) == 1, "This code can only handle batch size == 1"
+                        detailed_csv_writer.writerow([epoch, 'validation', img_name[0], validation_jaccards[i], validation_jaccards_full_size[i]])
+                        i += 1
                         # End is_cropped Hack
 
                         
@@ -368,8 +259,6 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
                 len_test = len(dataset_group.test)
                 if dataset_group.is_2d():
                     len_test //= 49
-                elif IS_CROPPED:
-                    len_test //= 9
                 test_losses = np.zeros(len_test)
                 test_jaccards = np.zeros(len_test)
                 test_jaccards_full_size = np.zeros(len_test)
@@ -411,67 +300,13 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
                         loss = criterion(result, gt)
                         test_losses[i] = loss.item()
                         full_size_result = dataset_group.resize_to_full_size(result)
-                        '''
+
                         test_jaccards[i] = jaccard(result, gt)
                         test_jaccards_full_size[i] = jaccard(full_size_result, full_size_gt)
 
                         assert len(img_name) == 1, "This code can only handle batch size == 1"
                         detailed_csv_writer.writerow([epoch, 'test', img_name[0], test_jaccards[i], test_jaccards_full_size[i]])
-
                         i += 1
-                        '''
-
-                        # Begin is_cropped Hack
-                        if IS_CROPPED:
-                            print(f'is_cropped: {img_name}')
-                            if '_8' in img_name[0]: # TODO: Make this more generic
-                                result_crops.append(result.detach().cpu().numpy())
-                                # Combine all results together into a correctly sized image
-                                combined_result = np.zeros(full_size_gt.shape)
-                                print(f'combined_result.shape: {combined_result.shape}')
-                                print(f'result_crops: {len(result_crops)}')
-                                for x_crop_idx in range(3):
-                                    for y_crop_idx in range(3):
-                                        result_part = result_crops.pop(0)
-                                        crop_y_extent = result_part.shape[3]
-                                        crop_x_extent = result_part.shape[4]
-
-                                        if y_crop_idx == 0:
-                                            y_start = 0
-                                        elif y_crop_idx == 1:
-                                            midway = (combined_result.shape[3] / 2)
-                                            y_start = int(midway - (crop_y_extent / 2))
-                                        elif y_crop_idx == 2:
-                                            y_start = combined_result.shape[3] - crop_y_extent
-
-                                        if x_crop_idx == 0:
-                                            x_start = 0
-                                        elif x_crop_idx == 1:
-                                            midway = (combined_result.shape[4] / 2)
-                                            x_start = int(midway - (crop_x_extent / 2))
-                                        elif x_crop_idx == 2:
-                                            x_start = combined_result.shape[4] - crop_x_extent
-
-                                        print(f'result_part.shape: {result_part.shape}')
-                                        combined_result[:,:,:, y_start:y_start+crop_y_extent, x_start:x_start+crop_x_extent] = result_part
-                                        full_size_result = torch.from_numpy(combined_result).to(device=DEVICE)
-                                result_crops = []
-                                test_jaccards[i] = jaccard(full_size_result, full_size_gt)
-                                test_jaccards_full_size[i] = jaccard(full_size_result, full_size_gt)
-
-                                assert len(img_name) == 1, "This code can only handle batch size == 1"
-                                detailed_csv_writer.writerow([epoch, 'test', img_name[0], test_jaccards[i], test_jaccards_full_size[i]])
-                                i += 1
-                            else:
-                                result_crops.append(result.detach().cpu().numpy())
-                        else:
-                            test_jaccards[i] = jaccard(result, gt)
-                            test_jaccards_full_size[i] = jaccard(full_size_result, full_size_gt)
-
-                            assert len(img_name) == 1, "This code can only handle batch size == 1"
-                            detailed_csv_writer.writerow([epoch, 'test', img_name[0], test_jaccards[i], test_jaccards_full_size[i]])
-                            i += 1
-                        # End is_cropped Hack
 
                     # For memory
                     del img
@@ -500,7 +335,7 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
                     #######################################################################
                     # Output at the end of each epoch where validation accuracy is increasing
                     #######################################################################
-                    logger.info(f'# This step has validation jaccard better than or equal to the previous best, outputting weights...')
+                    logger.info('# This step has validation jaccard better than or equal to the previous best, outputting weights...')
                     os.makedirs(checkpoint_folder, exist_ok=True)
                     weights_filename = 'best_validation'
                     save(model, optimizer, checkpoint_folder, weights_filename)
@@ -522,7 +357,7 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
                     #######################################################################
                     # Output at the end of each epoch where test accuracy is increasing
                     #######################################################################
-                    logger.info(f'# This step has test jaccard better than or equal to the previous best, outputting weights...')
+                    logger.info('# This step has test jaccard better than or equal to the previous best, outputting weights...')
                     os.makedirs(checkpoint_folder, exist_ok=True)
                     weights_filename = 'best_test'
                     save(model, optimizer, checkpoint_folder, weights_filename)
@@ -548,7 +383,7 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
                     #######################################################################
                     # Output at the end of each epoch where test accuracy is increasing
                     #######################################################################
-                    logger.info(f'# This step has full size test jaccard better than or equal to the previous best, outputting weights...')
+                    logger.info('# This step has full size test jaccard better than or equal to the previous best, outputting weights...')
                     os.makedirs(checkpoint_folder, exist_ok=True)
                     weights_filename = 'best_test_full_size'
                     save(model, optimizer, checkpoint_folder, weights_filename)

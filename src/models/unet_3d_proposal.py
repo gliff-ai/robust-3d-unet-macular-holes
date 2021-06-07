@@ -1,7 +1,7 @@
 import torch
 
 
-# Modified version of Cicek's model to cope better with our Intogral's dataset sizes
+# Modified version of Cicek's model to cope better with our dataset sizes
 # Input is 128x128x49 and output is 128x128x49
 class UNet3DProposal(torch.nn.Module):
     def __init__(self):

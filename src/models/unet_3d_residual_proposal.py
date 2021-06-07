@@ -1,7 +1,7 @@
 import torch
 
 
-# Modified version of residual model to cope better with our Intogral's dataset sizes
+# Modified version of residual model to cope better with our dataset sizes
 # Input is 128x128x49 and output is 128x128x49
 class UNet3DResidualProposal(torch.nn.Module):
     def __init__(self):
@@ -242,9 +242,7 @@ class UNet3DResidualProposal(torch.nn.Module):
         x = x + x_res
         # end residual 2
         x = self.relu_up_04(x)
-        # last two are unique for the last layer
-        x = self.conv_up_05(x)
 
-        #x = torch.sigmoid(x) # Not required as using BCEWithLogitsLoss
+        x = self.conv_up_05(x)
 
         return x

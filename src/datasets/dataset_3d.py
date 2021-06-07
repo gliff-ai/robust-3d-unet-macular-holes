@@ -1,13 +1,9 @@
 import os
 
-import numpy as np
 import skimage.io
 import torch
 import torch.utils
 import torch.utils.data
-import torchvision
-import torchvision.transforms
-import torchvision.transforms.functional as tf
 
 import common
 import datasets.cycle
@@ -15,37 +11,11 @@ import datasets.cycle
 
 # Z, Y, X
 IM_SIZE = {
-    'cicek':   (116, 132, 132),
-    'frawley': ( 49, 128, 128),
-    'large':   ( 49, 160, 160),
-    'highres':   ( 49, 376, 321),
-    'highres2':   ( 49, 376, 321),
-    'highres3':   ( 49, 188, 160), # This is okay (0.5 of res)
-    'highres4':   ( 49, 282, 240), # This is okay for u-net, not res (0.75 of res)
-    'highres5':   ( 49, 328, 280), # This gives out of mem error (0.875 of res)
-    'highres6':   ( 49, 234, 200), # This is okay for u-net, not res (0.625 of res)
-    'highres7':   ( 49, 212, 180), # This is okay for u-net, not res (0.5625 of res)
-    'amp_gpu7_unet': (49, 376, 321),
-    'amp_gpu7_unet_res': (49, 263, 224),
-    'test':    (  7,  18,  18)
-    #'test':    (  14,  36,  36)
+    'highres3d':   ( 49, 188, 160)
 }
 
 GT_SIZE = {
-    'cicek':   (28,  44,  44),
-    'frawley': (49, 128, 128),
-    'large':   (49, 160, 160),
-    'highres':   ( 49, 368, 320),
-    'highres2':   ( 49, 376, 320),
-    'highres3':   ( 49, 188, 160),
-    'highres4':   ( 49, 280, 240),
-    'highres5':   ( 49, 328, 280),
-    'highres6':   ( 49, 204, 200),
-    'highres7':   ( 49, 212, 180),
-    'amp_gpu7_unet': (49, 376, 320),
-    'amp_gpu7_unet_res': (49, 260, 224),
-    'test':    ( 5,  16,  16)
-    #'test':    (  9,  32,  32)
+    'highres3d':   ( 49, 188, 160),
 }
 
 

@@ -1,13 +1,9 @@
 import os
 
-import numpy as np
 import skimage.io
 import torch
 import torch.utils
 import torch.utils.data
-import torchvision
-import torchvision.transforms
-import torchvision.transforms.functional as tf
 
 import common
 import datasets.cycle
@@ -15,11 +11,11 @@ import datasets.cycle
 
 IM_SIZE = {
     'nocontext': 0,
-    'macular': 4
+    'highres2d': 4
 }
 GT_SIZE = {
     'nocontext': 0,
-    'macular': 4
+    'highres2d': 4
 }
 
 
