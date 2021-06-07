@@ -133,7 +133,6 @@ class UNet3DResidualProposal(torch.nn.Module):
         # end residual 2
         self.relu_up_04 = torch.nn.ReLU()
         # TODO: This is different than 2,1,1 which original used. Look into this
-        #self.conv_up_05 = torch.nn.ConvTranspose3d(64, 1, kernel_size=[1, 1, 2], stride=1, padding=0)
         self.conv_up_05 = torch.nn.ConvTranspose3d(64, 1, kernel_size=[2, 1, 1], stride=1, padding=0)
 
     def forward(self, x):

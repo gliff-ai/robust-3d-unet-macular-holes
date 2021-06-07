@@ -90,7 +90,6 @@ class Tiff3DDataset(torch.utils.data.Dataset):
             filtered_filenames = sorted([f for f in self.filename_list if im_name in f])
             full_name = filtered_filenames[0]
             im_path = os.path.join(self.im_root_dir, full_name)
-            #print(f'im: {im_name} {im_path}')
         else:
             im_name = self.filename_list[im_file_idx]
             im_path = os.path.join(self.im_root_dir, im_name)
@@ -99,14 +98,9 @@ class Tiff3DDataset(torch.utils.data.Dataset):
         im = common.normalize(im)
 
         im = torch.from_numpy(im).float()
-
-
         im = torch.unsqueeze(im, 0)
-
         full_size_im = im
-
         im = torch.unsqueeze(im, 0)
-
         im = torch.nn.functional.interpolate(im,
             size=IM_SIZE[self.dataset_size_code],
             mode='trilinear',
@@ -115,7 +109,6 @@ class Tiff3DDataset(torch.utils.data.Dataset):
 
         if self.combine_probabilities:
             filtered_gt_files = sorted([f for f in self.filename_list if im_name in f])
-            #print(f'gt: {filtered_gt_files}')
             combined_gt = None
             full_size_gt = None
             for gt_file in filtered_gt_files:
@@ -139,10 +132,6 @@ class Tiff3DDataset(torch.utils.data.Dataset):
                 else:
                     combined_gt += gt
             gt = combined_gt
-            #print(f'len(filtered_gt_files) {len(filtered_gt_files)} GT: {gt.mean()} {gt.shape} {gt.max()} {gt.min()} {((gt > 0.4) & (gt < 0.7)).sum()}')
-            #import matplotlib.pyplot as plt
-            #plt.imshow(gt[0, 24])
-            #plt.show()
         else:
             gt_path = os.path.join(self.gt_root_dir, im_name)
             gt = skimage.img_as_ubyte(skimage.io.imread(gt_path))

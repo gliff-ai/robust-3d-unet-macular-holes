@@ -12,6 +12,7 @@ class Interpolate(torch.nn.Module):
         x = self.interp(x, size=self.size, mode=self.mode, align_corners=False)
         return x
 
+
 class UNet3DSlicesResidual(torch.nn.Module):
     def __init__(self):
         super(UNet3DSlicesResidual, self).__init__()

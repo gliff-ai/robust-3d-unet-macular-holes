@@ -15,6 +15,7 @@ import common
 
 logger = None
 
+
 def get_git_hash():
     process = subprocess.Popen(['git', 'rev-parse', 'HEAD'], shell=False, stdout=subprocess.PIPE)
     return process.communicate()[0].strip().decode("utf-8")
