@@ -62,13 +62,12 @@ def setup_device():
         print('using CPU device')
     return device
 
-
 def output_images(img_dir, thresholded_result_dir, result_dir, img_names, imgs, results, suffix=None):
     batch_size = len(img_names)
     for i in range(batch_size):
         img_name = img_names[i]
         img = (imgs[i] * 255).cpu().numpy().astype(np.uint8)
-        result = (results[i] * 255).cpu().numpy().astype(np.uint8)
+        result = (normalize(results[i]) * 255).cpu().numpy().astype(np.uint8)
         thresholded_result = ((results[i] > 0.5) * 255).cpu().numpy().astype(np.uint8)
         if thresholded_result.sum() > 0:
             if img.shape[0] == 1:
