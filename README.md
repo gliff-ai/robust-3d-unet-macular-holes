@@ -1,5 +1,5 @@
 # Robust 3D U-Net Segmentation of Macular Holes
-Implementation of this [paper](https://arxiv.org/abs/2103.01299) which allows for the segmentation of macular hole data.
+Implementation of [this](https://arxiv.org/abs/2103.01299) paper which allows for the segmentation of macular hole data.
 
 ## Setup
 To install dependencies:
