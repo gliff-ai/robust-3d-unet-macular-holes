@@ -1,7 +1,7 @@
 # Robust 3D U-Net Segmentation of Macular Holes
 ## <div itemscope itemtype="https://schema.org/Person">Jonathan Frawley <a itemprop="sameAs" content="https://orcid.org/0000-0002-9437-7399" href="https://orcid.org/0000-0002-9437-7399" target="orcid.widget" rel="me noopener noreferrer" style="vertical-align:top;"><img src="https://orcid.org/sites/default/files/images/orcid_16x16.png" style="width:1em;margin-right:.5em;" alt="ORCID iD icon">https://orcid.org/0000-0002-9437-7399</a></div>
 
-Implementation of [this](https://arxiv.org/abs/2103.01299) paper which allows for the segmentation of macular hole data.
+Code for [this](https://arxiv.org/abs/2103.01299) paper which allows for the segmentation of macular hole data using 3D U-Nets.
 
 ## Citation
 If you use this software, please cite it using the following:
