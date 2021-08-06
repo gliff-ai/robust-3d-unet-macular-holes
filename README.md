@@ -1,4 +1,6 @@
 # Robust 3D U-Net Segmentation of Macular Holes
+## Jonathan Frawley
+
 Implementation of [this](https://arxiv.org/abs/2103.01299) paper which allows for the segmentation of macular hole data.
 
 ## Citation
