@@ -1,6 +1,20 @@
 # Robust 3D U-Net Segmentation of Macular Holes
 Implementation of [this](https://arxiv.org/abs/2103.01299) paper which allows for the segmentation of macular hole data.
 
+## Citation
+If you use this software, please cite it using the following:
+
+
+    @misc{frawley2021robust,
+          title={Robust 3D U-Net Segmentation of Macular Holes}, 
+          author={Jonathan Frawley and Chris G. Willcocks and Maged Habib and Caspar Geenen and David H. Steel and Boguslaw Obara},
+          year={2021},
+          eprint={2103.01299},
+          archivePrefix={arXiv},
+          primaryClass={eess.IV}
+    }
+
+
 ## Setup
 To install dependencies:
 
