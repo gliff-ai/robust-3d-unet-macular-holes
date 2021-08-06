@@ -18,7 +18,7 @@ If you use this software, please cite it as below:
 
 
 ## Setup
-To install dependencies:
+Requires Python 3.8 or newer. To install dependencies:
 
     pip install -r requirements.txt
 
