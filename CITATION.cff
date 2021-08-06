@@ -1,0 +1,28 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+\newcommand{\orcidauthorF}{0000-0003-4084-7778} % Add \orcidF{} behind the author's name
+\Author{Jonathan Frawley $^{1,2}$\orcidA{}, Chris G.~Willcocks $^{1}$\orcidB{}, Maged Habib $^{3}\orcidC{}$, Caspar Geenen $^{3}$\orcidD{}, David H.~Steel$^{3,4}$\orcidE{} and Boguslaw Obara  $^{2,4}$\orcidF{}}
+
+authors:
+  - family-names: Frawley
+    given-names: Jonathan
+    orcid: https://orcid.org/0000-0002-9437-7399
+  - family-names: Willcocks
+    given-names: Chris G.
+    orcid: https://orcid.org/0000-0001-6821-3924
+  - family-names: Habib
+    given-names: Maged 
+    orcid: https://orcid.org/0000-0003-0931-3786
+  - family-names: Geenen
+    given-names: Caspar
+    orcid: https://orcid.org/0000-0002-2778-6344
+  - family-names: Steel
+    given-names: David H.
+    orcid: https://orcid.org/0000-0001-8734-3089
+  - family-names: Obara
+    given-names: Boguslaw
+    orcid: https://orcid.org/0000-0003-4084-7778
+
+title: "Robust 3D U-Net Segmentation of Macular Holes"
+version: 1.0.0
+date-released: 2021-08-06
