@@ -107,6 +107,7 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
 
     # Defaults
     best_validation_jaccard = 0.0
+    best_validation_jaccard_full_size = 0.0
     best_test_jaccard = 0.0
     best_test_jaccard_full_size = 0.0
     start_epoch = 0
@@ -125,10 +126,10 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
 
             start_epoch = metadata['epoch'] + 1
             best_validation_jaccard = metadata['best_validation_jaccard']
-            if 'best_test_jaccard' in metadata:
-                best_test_jaccard = metadata['best_test_jaccard']
-            if 'best_test_jaccard_full_size' in metadata:
-                best_test_jaccard_full_size = metadata['best_test_jaccard_full_size']
+            best_validation_jaccard_full_size = metadata['best_validation_jaccard_full_size']
+            best_test_jaccard = metadata['best_test_jaccard']
+            best_test_jaccard_full_size = metadata['best_test_jaccard_full_size']
+
             checkpoint = torch.load(os.path.join(checkpoint_folder, f'{weights_filename}.pth'))
             logger.info(f'best_validation_jaccard <{best_validation_jaccard}>')
             model.load_state_dict(checkpoint['model_state_dict'])
@@ -347,63 +348,47 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
                                        train_jaccard=float(train_jaccards.mean()),
                                        validation_jaccard=float(validation_jaccards.mean()),
                                        test_jaccard=float(test_jaccards.mean()),
+                                       best_test_jaccard=float(best_test_jaccard),
+                                       best_test_jaccard_full_size=float(best_test_jaccard_full_size),
                                        best_validation_jaccard=float(best_validation_jaccard),
+                                       best_validation_jaccard_full_size=float(best_validation_jaccard_full_size),
                                        timestamp=f"{datetime.datetime.now().isoformat()}")
+                        logger.info(f"Outputting to weights file {weights_filename} metadata: {json.dumps(json_dict)}")
+                        json.dump(json_dict,
+                                  checkpoint_info_file)
+
+                if validation_jaccards_full_size.mean() > best_validation_jaccard_full_size:
+                    best_validation_jaccard_full_size = validation_jaccards_full_size.mean()
+                    #######################################################################
+                    # Output at the end of each epoch where validation accuracy is increasing
+                    #######################################################################
+                    logger.info('# This step has full size validation jaccard better than or equal to the previous best, outputting weights...')
+                    os.makedirs(checkpoint_folder, exist_ok=True)
+                    weights_filename = 'best_validation_full_size'
+                    save(model, optimizer, checkpoint_folder, weights_filename)
+
+                    logger.info(f"open(os.path.join({checkpoint_folder}, '{weights_filename}_metadata.json'), 'w'")
+                    with open(os.path.join(checkpoint_folder, f'{weights_filename}_metadata.json'), 'w') as checkpoint_info_file:
+                        json_dict = dict(epoch=epoch,
+                                       exp_id=exp_id,
+                                       train_jaccard=float(train_jaccards.mean()),
+                                       validation_jaccard=float(validation_jaccards.mean()),
+                                       test_jaccard=float(test_jaccards.mean()),
+                                       best_test_jaccard=float(best_test_jaccard),
+                                       best_test_jaccard_full_size=float(best_test_jaccard_full_size),
+                                       best_validation_jaccard=float(best_validation_jaccard),
+                                       best_validation_jaccard_full_size=float(best_validation_jaccard_full_size),
+                                       timestamp=f"{datetime.datetime.now().isoformat()}")
+
                         logger.info(f"Outputting to weights file {weights_filename} metadata: {json.dumps(json_dict)}")
                         json.dump(json_dict,
                                   checkpoint_info_file)
 
                 if test_jaccards.mean() > best_test_jaccard:
                     best_test_jaccard = test_jaccards.mean()
-                    #######################################################################
-                    # Output at the end of each epoch where test accuracy is increasing
-                    #######################################################################
-                    logger.info('# This step has test jaccard better than or equal to the previous best, outputting weights...')
-                    os.makedirs(checkpoint_folder, exist_ok=True)
-                    weights_filename = 'best_test'
-                    save(model, optimizer, checkpoint_folder, weights_filename)
-
-                    logger.info(f"open(os.path.join({checkpoint_folder}, '{weights_filename}_metadata.json'), 'w'")
-                    with open(os.path.join(checkpoint_folder, f'{weights_filename}_metadata.json'), 'w') as checkpoint_info_file:
-                        json_dict = dict(epoch=epoch,
-                                       exp_id=exp_id,
-                                       train_jaccard=float(train_jaccards.mean()),
-                                       validation_jaccard=float(validation_jaccards.mean()),
-                                       test_jaccard=float(test_jaccards.mean()),
-                                       best_validation_jaccard=float(best_validation_jaccard),
-                                       best_test_jaccard=float(best_test_jaccard),
-                                       best_test_jaccard_full_size=float(best_test_jaccard_full_size),
-                                       timestamp=f"{datetime.datetime.now().isoformat()}")
-
-                        logger.info(f"Outputting to weights file {weights_filename} metadata: {json.dumps(json_dict)}")
-                        json.dump(json_dict,
-                                  checkpoint_info_file)
 
                 if test_jaccards_full_size.mean() > best_test_jaccard_full_size:
                     best_test_jaccard_full_size = test_jaccards_full_size.mean()
-                    #######################################################################
-                    # Output at the end of each epoch where test accuracy is increasing
-                    #######################################################################
-                    logger.info('# This step has full size test jaccard better than or equal to the previous best, outputting weights...')
-                    os.makedirs(checkpoint_folder, exist_ok=True)
-                    weights_filename = 'best_test_full_size'
-                    save(model, optimizer, checkpoint_folder, weights_filename)
-
-                    logger.info(f"open(os.path.join({checkpoint_folder}, '{weights_filename}_metadata.json'), 'w'")
-                    with open(os.path.join(checkpoint_folder, f'{weights_filename}_metadata.json'), 'w') as checkpoint_info_file:
-                        json_dict = dict(epoch=epoch,
-                                       exp_id=exp_id,
-                                       train_jaccard=float(train_jaccards.mean()),
-                                       validation_jaccard=float(validation_jaccards.mean()),
-                                       test_jaccard=float(test_jaccards.mean()),
-                                       best_validation_jaccard=float(best_validation_jaccard),
-                                       best_test_jaccard=float(best_test_jaccard),
-                                       best_test_jaccard_full_size=float(best_test_jaccard_full_size),
-                                       timestamp=f"{datetime.datetime.now().isoformat()}")
-
-                        logger.info(f"Outputting to weights file {weights_filename} metadata: {json.dumps(json_dict)}")
-                        json.dump(json_dict,
-                                  checkpoint_info_file)
 
                 #######################################################################
                 # Output at the end of each epoch so we can resume training
@@ -416,14 +401,15 @@ def run(model, dataset_group, epochs, learning_rate, exp_id, iter_per_epoch, wei
 
                 with open(os.path.join(checkpoint_folder, f'{weights_filename}_metadata.json'), 'w') as checkpoint_info_file:
                     json_dict = dict(epoch=epoch,
-                            exp_id=exp_id,
-                            train_jaccard=float(train_jaccards.mean()),
-                            validation_jaccard=float(validation_jaccards.mean()),
-                            test_jaccard=float(test_jaccards.mean()),
-                            best_validation_jaccard=float(best_validation_jaccard),
-                            best_test_jaccard=float(best_test_jaccard),
-                            best_test_jaccard_full_size=float(best_test_jaccard_full_size),
-                            timestamp=f"{datetime.datetime.now().isoformat()}")
+                                    exp_id=exp_id,
+                                    train_jaccard=float(train_jaccards.mean()),
+                                    validation_jaccard=float(validation_jaccards.mean()),
+                                    test_jaccard=float(test_jaccards.mean()),
+                                    best_test_jaccard=float(best_test_jaccard),
+                                    best_test_jaccard_full_size=float(best_test_jaccard_full_size),
+                                    best_validation_jaccard=float(best_validation_jaccard),
+                                    best_validation_jaccard_full_size=float(best_validation_jaccard_full_size),
+                                    timestamp=f"{datetime.datetime.now().isoformat()}")
 
                     logger.info(f"Outputting to weights file {weights_filename} metadata: {json.dumps(json_dict)}")
                     json.dump(json_dict,

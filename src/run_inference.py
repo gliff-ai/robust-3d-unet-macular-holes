@@ -13,7 +13,7 @@ parser.add_argument('--conf', metavar='conf', type=str, required=True,
     help='Path to config file')
 parser.add_argument('--exp_id', type=str, required=True,
     help='Experiment ID')
-parser.add_argument('--weights_filename', type=str, default='best_validation',
+parser.add_argument('--weights_filename', type=str, default='best_validation_full_size',
     help="e.g - 'best_validation'")
 
 cli_args = parser.parse_args()
